@@ -1,151 +1,111 @@
-import createHttpError from 'http-errors';
-import authService from '../services/auth.js';
-import jwt from 'jsonwebtoken';
-import User from '../db/models/user.js';
-import sendMail from '../utils/sendMail.js';
-import Session from '../db/models/session.js';
+import { THIRTY_DAYS } from '../constants/index.js';
+import {
+  loginUser,
+  logoutUser,
+  refreshSession,
+  requestResetToken,
+  resetPassword,
+  userRegister,
+} from '../services/auth.js';
+import { getOAuthUrl, validateCode } from '../utils/googleOAuth.js';
+import * as authService from '../services/auth.js';
 
-const COOKIE_MAX_AGE = 30 * 24 * 60 * 60 * 1000;
+export const saveSessionToCookies = (res, session) => {
+  res.cookie('refreshToken', session.refreshToken, {
+    httpOnly: true,
+    expires: new Date(Date.now() + THIRTY_DAYS),
+  });
 
-const register = async (req, res) => {
-  const { name, email, password } = req.body;
+  res.cookie('sessionId', session._id, {
+    httpOnly: true,
+    expires: new Date(Date.now() + THIRTY_DAYS),
+  });
+};
 
-  const existingUser = await authService.findUserByEmail(email);
-  if (existingUser) {
-    throw createHttpError(409, 'Email in use');
-  }
-
-  const newUser = await authService.createUser({ name, email, password });
-
+export const userRegisterController = async (req, res) => {
+  const user = await userRegister(req.body);
   res.status(201).json({
     status: 201,
     message: 'Successfully registered a user!',
+    data: user,
+  });
+};
+
+export const loginUserController = async (req, res) => {
+  const session = await loginUser(req.body);
+
+  saveSessionToCookies(res, session);
+
+  res.json({
+    status: 200,
+    message: 'Successfully logged in a user!',
     data: {
-      id: newUser._id,
-      name: newUser.name,
-      email: newUser.email,
+      accessToken: session.accessToken,
     },
   });
 };
 
-const login = async (req, res) => {
-  const { email, password } = req.body;
-  const { accessToken, refreshToken } = await authService.loginUser({
-    email,
-    password,
-  });
-
-  res.cookie('refreshToken', refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: COOKIE_MAX_AGE,
-  });
-
-  res.status(200).json({
-    status: 200,
-    message: 'Successfully logged in a user!',
-    data: { accessToken },
-  });
-};
-
-const refresh = async (req, res) => {
-  const { refreshToken: oldRefreshToken } = req.cookies;
-  if (!oldRefreshToken) {
-    throw createHttpError(401, 'Refresh token missing');
-  }
-
-  const { accessToken, refreshToken } = await authService.refreshSession(
-    oldRefreshToken,
+export const refreshTokenController = async (req, res) => {
+  const session = await refreshSession(
+    req.cookies.sessionId,
+    req.cookies.refreshToken,
   );
 
-  res.cookie('refreshToken', refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: COOKIE_MAX_AGE,
-  });
+  saveSessionToCookies(res, session);
 
-  res.status(200).json({
+  res.json({
     status: 200,
     message: 'Successfully refreshed a session!',
-    data: { accessToken },
+    data: {
+      accessToken: session.accessToken,
+    },
   });
 };
 
-const logout = async (req, res) => {
-  const { refreshToken } = req.cookies;
-  if (!refreshToken) {
-    throw createHttpError(401, 'Not authenticated');
+export const logoutUserController = async (req, res) => {
+  if (req.cookies.sessionId) {
+    await logoutUser(req.cookies.sessionId);
   }
 
-  await authService.logoutUser(refreshToken);
+  res.clearCookie('sessionId');
+  res.clearCookie('refreshToken');
 
-  res.clearCookie('refreshToken', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-  });
-
-  res.status(204).send();
+  res.sendStatus(204);
 };
 
-const sendResetEmail = async (req, res) => {
-  const { email } = req.body;
-
-  const user = await User.findOne({ email });
-  if (!user) {
-    throw createHttpError(404, 'User not found!');
-  }
-
-  const token = jwt.sign({ email }, process.env.JWT_SECRET, {
-    expiresIn: '5m',
-  });
-
-  const resetLink = `${process.env.APP_DOMAIN}/reset-password?token=${token}`;
-
-  await sendMail({
-    to: email,
-    subject: 'Reset Password',
-    html: `<p>Click the link below to reset your password:</p>
-           <a href="${resetLink}">${resetLink}</a>`,
-  });
-
-  res.status(200).json({
-    status: 200,
+export const requestResetEmailController = async (req, res) => {
+  await requestResetToken(req.body.email);
+  res.json({
     message: 'Reset password email has been successfully sent.',
+    status: 200,
     data: {},
   });
 };
 
-const resetPassword = async (req, res) => {
-  const { token, password } = req.body;
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findOne({ email: decoded.email });
-
-    if (!user) {
-      throw createHttpError(404, 'User not found!');
-    }
-
-    await authService.resetUserPassword(user, password);
-
-    // Видаляємо всі сесії користувача після оновлення пароля
-    await Session.deleteMany({ userId: user._id });
-
-    res.status(200).json({
-      status: 200,
-      message: 'Password has been successfully reset.',
-      data: {},
-    });
-  } catch (/* eslint-disable-line no-unused-vars */error) {
-    throw createHttpError(401, 'Token is expired or invalid.');
-  }
+export const resetPasswordController = async (req, res) => {
+  await resetPassword(req.body);
+  res.json({
+    message: 'Password has been successfully reset.',
+    status: 200,
+    data: {},
+  });
 };
 
-export default {
-  register,
-  login,
-  refresh,
-  logout,
-  sendResetEmail,
-  resetPassword,
+export const getOAuthUrlController = async (req, res) => {
+  const url = getOAuthUrl();
+
+  res.json({
+    status: 200,
+    message: 'Successfully got OAuth URL',
+    data: {
+      oauth_url: url,
+    },
+  });
+};
+
+export const confirmOAuthController = async (req, res) => {
+  const ticket = await validateCode(req.body.code);
+  await authService.loginOrRegister(ticket.payload.email, ticket.payload.name);
+
+  res.end();
 };

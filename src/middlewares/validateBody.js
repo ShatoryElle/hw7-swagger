@@ -1,13 +1,16 @@
 import createHttpError from 'http-errors';
 
-const validateBody = (schema) => (req, _res, next) => {
-  return schema
-    .validateAsync(req.body, { abortEarly: false })
-    .then(() => next())
-    .catch((error) => {
-      const errors = error.details.map((detail) => detail.message).join(', ');
-      next(new createHttpError.BadRequest(errors));
+export const validateBody = (schema) => async (req, res, next) => {
+  try {
+    await schema.validateAsync(req.body, {
+      abortEarly: false,
     });
+    next();
+  } catch (err) {
+    const error = createHttpError(400, {
+      errors: err.details.map(({ message }) => message),
+      message: 'The data failed validation!',
+    });
+    next(error);
+  }
 };
-
-export default validateBody;

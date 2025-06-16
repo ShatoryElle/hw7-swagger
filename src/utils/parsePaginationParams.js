@@ -1,22 +1,19 @@
-import createHttpError from 'http-errors';
-
-const parseNumber = (number, defaultValue, paramName) => {
+const parseNumber = (number, defaultValue) => {
   const isString = typeof number === 'string';
   if (!isString) return defaultValue;
-
-  const parsedNumber = parseInt(number, 10);
-  if (Number.isNaN(parsedNumber) || parsedNumber < 1) {
-    throw new createHttpError.BadRequest(
-      `Invalid pagination parameter: ${paramName}=${number}`,
-    );
+  const parsedNumber = parseInt(number);
+  if (Number.isNaN(parsedNumber)) {
+    return defaultValue;
   }
-
   return parsedNumber;
 };
 
-const parsePaginationParams = (query) => ({
-  page: parseNumber(query.page, 1, 'page'),
-  perPage: parseNumber(query.perPage, 10, 'perPage'),
-});
-
-export default parsePaginationParams;
+export const parsePaginationParams = (query) => {
+  const { page, perPage } = query;
+  const parsedPage = parseNumber(page, 1);
+  const parsedPerPage = parseNumber(perPage, 10);
+  return {
+    page: parsedPage,
+    perPage: parsedPerPage,
+  };
+};
