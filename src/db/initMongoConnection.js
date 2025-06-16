@@ -3,7 +3,7 @@ import { getEnvVar } from '../utils/getEnvVar.js';
 
 export const initMongoConnection = async () => {
   try {
-    const mongoUri = getEnvVar('MONGODB_URL');
+    const mongoUri = getEnvVar('MONGO_URI');
     console.log('MONGODB_URL from env:', mongoUri);
 
     await mongoose.connect(mongoUri, {
