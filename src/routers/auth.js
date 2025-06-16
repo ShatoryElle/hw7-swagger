@@ -1,41 +1,58 @@
 import { Router } from 'express';
-import authController from '../controllers/auth.js';
-import validateBody from '../middlewares/validateBody.js';
+import { validateBody } from '../middlewares/validateBody.js';
 import {
-  registerSchema,
-  loginSchema,
-  resetEmailSchema,
+  loginUserSchema,
+  registerUserSchema,
+  requestResetEmailSchema,
   resetPasswordSchema,
+  confirmOAuthSchema,
 } from '../validation/auth.js';
-import ctrlWrapper from '../utils/ctrlWrapper.js';
+import { ctrlWrapper } from '../utils/ctrlWrapper.js';
+import {
+  loginUserController,
+  logoutUserController,
+  refreshTokenController,
+  requestResetEmailController,
+  resetPasswordController,
+  userRegisterController,
+  getOAuthUrlController,
+  confirmOAuthController,
+} from '../controllers/auth.js';
 
-const router = Router();
+export const authRouter = Router();
 
-router.post(
+authRouter.post(
   '/register',
-  validateBody(registerSchema),
-  ctrlWrapper(authController.register),
+  validateBody(registerUserSchema),
+  ctrlWrapper(userRegisterController),
 );
 
-router.post(
+authRouter.post(
   '/login',
-  validateBody(loginSchema),
-  ctrlWrapper(authController.login),
+  validateBody(loginUserSchema),
+  ctrlWrapper(loginUserController),
 );
 
-router.post('/refresh', ctrlWrapper(authController.refresh));
-router.post('/logout', ctrlWrapper(authController.logout));
+authRouter.post('/refresh', ctrlWrapper(refreshTokenController));
 
-router.post(
+authRouter.post('/logout', ctrlWrapper(logoutUserController));
+
+authRouter.post(
   '/send-reset-email',
-  validateBody(resetEmailSchema),
-  ctrlWrapper(authController.sendResetEmail),
+  validateBody(requestResetEmailSchema),
+  ctrlWrapper(requestResetEmailController),
 );
 
-router.post(
+authRouter.post(
   '/reset-pwd',
   validateBody(resetPasswordSchema),
-  ctrlWrapper(authController.resetPassword),
+  ctrlWrapper(resetPasswordController),
 );
 
-export default router;
+authRouter.get('/get-oauth-url', ctrlWrapper(getOAuthUrlController));
+
+authRouter.post(
+  '/confirm-oauth',
+  validateBody(confirmOAuthSchema),
+  ctrlWrapper(confirmOAuthController),
+);

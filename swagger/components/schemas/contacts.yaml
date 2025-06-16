@@ -1,0 +1,56 @@
+Contact:
+type: object
+required:
+  - _id
+  - name
+  - phoneNumber
+  - contactType
+  - userId
+properties:
+  _id:
+    type: string
+    description: Contact id
+    example: 67eec4c00c73bfc979baedbc
+  name:
+    type: string
+    description: Contact name
+    example: John Doe
+  phoneNumber:
+    type: string
+    description: Contact phone number
+    example: '+3806800236541'
+  email:
+    type: string
+    description: Contact email
+    example: mail@ukr.net
+  isFavourite:
+    type: boolean
+    description: Whether contact is favourite
+    example: true
+    default: false
+  contactType:
+    type: string
+    description: Contact marker. Should be between parameters
+    enum:
+      - work
+      - home
+      - personal
+  userId:
+    type: string
+    description: Contact user id
+    example: 65e4decdd286b30065d54af9
+  photo:
+    type: string
+    description: Link to contact photo
+    example: https://res.cloudinary.com/uqwgdu/image/upload/image.png
+    default: null
+  createdAt:
+    type: string
+    format: date-time
+    description: Contact created date
+    example: 2025-03-27T19:43:21.686+00:00
+  updateAt:
+    type: string
+    format: date-time
+    description: Contact updated date
+    example: 2025-03-27T19:43:21.686+00:00

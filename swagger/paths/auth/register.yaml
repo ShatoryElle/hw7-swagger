@@ -1,0 +1,68 @@
+tags:
+  - Auth
+summary: Register new user
+operationId: registerUser
+description: Register a new user with name, email, and password
+security:
+  - bearerAuth: []
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - name
+          - email
+          - password
+        properties:
+          name:
+            type: string
+            example: John Doe
+          email:
+            type: string
+            format: email
+            example: john.doe@example.com
+          password:
+            type: string
+            format: password
+            example: securePassword123
+responses:
+  '201':
+    description: User registered successfully
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - status
+            - message
+            - data
+          properties:
+            status:
+              type: integer
+              example: 201
+            message:
+              type: string
+              example: Successfully registered a user!
+            data:
+              type: object
+              properties:
+                id:
+                  type: string
+                  example: 65d1f49bfa8e9e1a9c9d3a5b
+                name:
+                  type: string
+                  example: John Doe
+                email:
+                  type: string
+                  example: john.doe@example.com
+                token:
+                  type: string
+                  example: jwt-token-string
+  '400':
+    description: Bad request (missing or invalid fields)
+    $ref: ../../components/responses/400.yaml
+  '409':
+    description: User with this email already exists
+    $ref: ../../components/responses/409.yaml
