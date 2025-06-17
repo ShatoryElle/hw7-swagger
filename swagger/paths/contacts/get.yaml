@@ -1,38 +1,58 @@
+# tags:
+#   - Contacts
+# summary: Get contact by id
+# operationId: getContact
+# description: Get contact by id
+# security:
+#   - bearerAuth: []
+# parameters:
+#   - in: path
+#     name: id
+#     required: true
+#     schema:
+#       type: string
+#       example: 65ca67e7ae7f10c88b598384
+# responses:
+#   '200':
+#     description: Get contact by id
+#     content:
+#       application/json:
+#         schema:
+#           type: object
+#           required:
+#             - status
+#             - message
+#             - data
+#           properties:
+#             status:
+#               type: integer
+#               example: 200
+#             message:
+#               type: string
+#               example: Successfully found contact with id 65ca67e7ae7f10c88b598384!
+#             data:
+#               $ref: '../../components/schemas/contacts.yaml#/Contact'
+#   '401':
+#     $ref: '../../../components/responses/401.yaml'
+#   '404':
+#     $ref: '../../../components/responses/404.yaml'
 tags:
   - Contacts
-summary: Get contact by id
-operationId: getContact
-description: Get contact by id
+summary: Get all contacts
+operationId: getContacts
+description: Retrieve all contacts
 security:
   - bearerAuth: []
-parameters:
-  - in: path
-    name: id
-    required: true
-    schema:
-      type: string
-      example: 65ca67e7ae7f10c88b598384
 responses:
   '200':
-    description: Get contact by id
+    description: List of contacts
     content:
       application/json:
         schema:
-          type: object
-          required:
-            - status
-            - message
-            - data
-          properties:
-            status:
-              type: integer
-              example: 200
-            message:
-              type: string
-              example: Successfully found contact with id 65ca67e7ae7f10c88b598384!
-            data:
-              $ref: '#/components/schemas/Contact'
+          type: array
+          items:
+            $ref: '../../components/schemas/contacts.yaml#/Contact'
   '401':
-    $ref: '#/components/responses/401'
+    $ref: '../../components/responses/401.yaml'
   '404':
-    $ref: '#/components/responses/404'
+    $ref: '../../components/responses/404.yaml'

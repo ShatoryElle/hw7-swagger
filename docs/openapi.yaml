@@ -7,14 +7,12 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   description: This is a documentation of contacts app
 tags:
-  # теги, що ви будете використовувати
   - name: Auth
     description: Auth operations.
   - name: Contacts
     description: Operations about contacts.
 servers:
-  - url: http://localhost:3000
-  - url: https://contacts-app-swagger-z45b.onrender.com
+  - url: https://hw7-swagger-8dkw.onrender.com
 paths:
   /contacts:
     get:
@@ -34,11 +32,16 @@ paths:
   /auth/login:
     post:
       $ref: '../swagger/paths/auth/login.yaml'
-#    $ref: ../swagger/paths/auth/logout.yaml
-#    $ref: ../swagger/paths/auth/refresh.yaml
-# тут будуть посилання на ендпоінти
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
+  schemas:
+    Contact:
+      $ref: '../swagger/components/schemas/contacts.yaml#/Contact'
+  responses:
+    '401':
+      $ref: '../swagger/components/responses/401.yaml'
+    '404':
+      $ref: '../swagger/components/responses/404.yaml'
